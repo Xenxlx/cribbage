@@ -3,6 +3,8 @@ This is my attempt at making a cribbage score calculator
 
 '''
 from itertools import combinations
+rank_lst = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+suit_lst = ['H', 'D', 'S', 'C']
 
 # Card class (card1 = Card(rank, suit)), NOT USED CURRENTLY
 # I'll come back if I learn how to implement OOP in this program
@@ -14,26 +16,42 @@ from itertools import combinations
 
 card1 = Card(7, 'Hearts')'''
 
+def get_cut():
+    while True:
+        rank = input("Enter the rank of the cut card: ")
+        if rank in rank_lst:
+            if rank.isdigit():
+                rank = int(rank)
+            break
+        else:
+            print("Rank must be a number between 2-10 or A, J, Q or K.")
+
+    while True:
+            suit = input("Enter the suit of the cut card: ")
+
+            if suit not in suit_lst:
+                print("Suit must be H, D, S or C.")
+            else:
+                break
+
+    return rank, suit
+    
+
 
 def get_hand():
-    card_number = 0
+    card_number = 1
     hand = []
-    rank_lst = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-    suit_lst = ['H', 'D', 'S', 'C']
 
     while len(hand) <= 4:  # Assuming a hand of 4 cards, 4 player game
-        card_number += 1
-
         while True:  # Inputting rank
             rank = input("Enter the rank of card " + str(card_number) + ": ")
 
             if rank in rank_lst:  # Checks if rank is valid input AND .isdigit()
-
                 if rank.isdigit():
                     rank = int(rank)
                 break
             else:
-                print("Rank must be a number between 1-10 or J, Q or K for face cards. ")
+                print("Rank must be a number between 2-10 or A, J, Q or K.")
 
         while True:  # Inputting suit
             suit = input("Enter the suit of card " + str(card_number) + ": ")
@@ -44,6 +62,7 @@ def get_hand():
                 break
 
         hand.append([rank, suit])
+        card_number += 1
 
     print(hand)
     return hand
@@ -66,7 +85,16 @@ def get_hand():
 
 def calculator():
     points = 0
+    cut_rank, cut_suit = get_cut()
     hand = get_hand()
+
+    # Cut calculator
+    if cut_rank == 'J':
+        points += 1
+    
+    for i in range(len(hand)):
+        if hand[i][0] == 'J' and hand[i][1] == cut_suit:
+            points += 1
 
     # Pair calculator (Before preprocessing for printing purposes)
     for i in range(len(hand) - 1):
@@ -76,7 +104,7 @@ def calculator():
                 print(f"Pair of {hand[j][0]}'s!")
 
 
-    # HAND PREPROCESSING - Face cards in order (for runs)
+    # HAND PREPROCESSING - Face cards in order (for runs & fifteens)
     for i in range(len(hand)):
         if hand[i][0] == 'A':
             hand[i][0] = 1
@@ -168,11 +196,12 @@ def calculator():
         i += 1
     print(f'Suit length: {suit_length}')
 
-    # HAND PREPROCESSING - Face cards to values
-    for i in range(len(hand)):  # Convert face cards to respective values
-        if type(hand[i][0]) != int:
-            if 10 < hand[i][0] < 14:
-                hand[i][0] = 10
+    # HAND PREPROCESSING - Convert face cards to value of 10
+    i = 0
+    for i in range(len(hand)):
+        if 10 < hand[i][0] < 14:
+            hand[i][0] = 10
+            print(hand[i][0])
 
         else:
             hand[i][0] = int(hand[i][0])
