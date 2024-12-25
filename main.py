@@ -3,6 +3,7 @@ This is my attempt at making a cribbage score calculator
 
 '''
 from itertools import combinations
+# Can make these lists dictionaries mapped to their respective values (K = 13)
 rank_lst = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 suit_lst = ['H', 'D', 'S', 'C']
 
@@ -18,7 +19,7 @@ card1 = Card(7, 'Hearts')'''
 
 def get_cut():
     while True:
-        rank = input("Enter the rank of the cut card: ")
+        rank = input("Enter the rank of the cut card: ").upper()
         if rank in rank_lst:
             if rank.isdigit():
                 rank = int(rank)
@@ -27,7 +28,7 @@ def get_cut():
             print("Rank must be a number between 2-10 or A, J, Q or K.")
 
     while True:
-            suit = input("Enter the suit of the cut card: ")
+            suit = input("Enter the suit of the cut card: ").upper()
 
             if suit not in suit_lst:
                 print("Suit must be H, D, S or C.")
@@ -35,16 +36,14 @@ def get_cut():
                 break
 
     return rank, suit
-    
-
 
 def get_hand():
     card_number = 1
     hand = []
 
-    while len(hand) <= 4:  # Assuming a hand of 4 cards, 4 player game
+    while len(hand) < 4:  # Assuming a hand of 4 cards, 4 player game
         while True:  # Inputting rank
-            rank = input("Enter the rank of card " + str(card_number) + ": ")
+            rank = input("Enter the rank of card " + str(card_number) + ": ").upper()
 
             if rank in rank_lst:  # Checks if rank is valid input AND .isdigit()
                 if rank.isdigit():
@@ -54,7 +53,7 @@ def get_hand():
                 print("Rank must be a number between 2-10 or A, J, Q or K.")
 
         while True:  # Inputting suit
-            suit = input("Enter the suit of card " + str(card_number) + ": ")
+            suit = input("Enter the suit of card " + str(card_number) + ": ").upper()
 
             if suit not in suit_lst:
                 print("Suit must be H, D, S or C.")
@@ -82,11 +81,51 @@ def get_hand():
     return hand
 '''
 
+def pair_calc(hand):
+    points = 0
+    for i in range(len(hand) - 1):
+        for j in range(i + 1, len(hand)):
+            if hand[j][0] == hand[i][0]:
+                points += 2
+                print(f"Pair of {hand[j][0]}'s!")
+    return points
+
+def fifteen_calc(hand):
+    points = 0
+    for r in range(2, 6):
+        for comb in combinations(hand, r):
+            print(comb)
+            if sum(card[0] for card in comb) == 15:
+                print('15 for 2!')
+                points += 2
+    return points
+
+def flush_calc(hand):
+    # Flush (4-5 same suit cards) calc FIX
+    suit_length = 1
+    suit_hand = sorted(hand, key=lambda card: card[1])  # Sorts by suit
+    print(f'Suit hand: {suit_hand}')
+
+    i = 0
+    while i < len(suit_hand) - 1:
+        if suit_hand[i][1] == suit_hand[i + 1][1]:
+            suit_length += 1
+        i += 1
+    
+    if suit_length > 3:
+        points += suit_length
+        print(f'Flush of {suit_length} cards!')
+
+    print(f'Suit length: {suit_length}')
+
 
 def calculator():
     points = 0
     cut_rank, cut_suit = get_cut()
     hand = get_hand()
+    hand.append([cut_rank, cut_suit])
+
+    # points = cut_calc + pair_calc(hand) + run_calc + flush_calc + fifteens_calc // AT THE END
 
     # Cut calculator
     if cut_rank == 'J':
@@ -95,14 +134,6 @@ def calculator():
     for i in range(len(hand)):
         if hand[i][0] == 'J' and hand[i][1] == cut_suit:
             points += 1
-
-    # Pair calculator (Before preprocessing for printing purposes)
-    for i in range(len(hand) - 1):
-        for j in range(i + 1, len(hand)):
-            if hand[j][0] == hand[i][0]:
-                points += 2
-                print(f"Pair of {hand[j][0]}'s!")
-
 
     # HAND PREPROCESSING - Face cards in order (for runs & fifteens)
     for i in range(len(hand)):
@@ -119,7 +150,7 @@ def calculator():
             hand[i][0] = 13
 
 
-    # Sorting for calculator (sorts by suit + rank)
+    # Sorting for runs calculator (sorts by suit + rank)
     sorted_hand = sorted(hand)  # Sort by suit would be useful for Gin Rummy calculator
 
     # Remove + track duplicates for runs
@@ -176,26 +207,6 @@ def calculator():
 
         i += 1
 
-    # Flush (4-5 same suit cards) calc FIX
-    suit_length = 1
-    suit_hand = sorted(hand, key=lambda card: card[1])  # Sorts by suit
-    print(f'Suit hand: {suit_hand}')
-
-    i = 0
-    while i < len(suit_hand) - 1:
-        if suit_hand[i][1] == suit_hand[i + 1][1]:
-            suit_length += 1
-
-        else:   # When suit run is finished
-            if suit_length > 3:
-                points += suit_length
-                print(f'Flush of {suit_length} cards!')
-
-            suit_length = 1
-
-        i += 1
-    print(f'Suit length: {suit_length}')
-
     # HAND PREPROCESSING - Convert face cards to value of 10
     i = 0
     for i in range(len(hand)):
@@ -206,13 +217,8 @@ def calculator():
         else:
             hand[i][0] = int(hand[i][0])
 
-    # Fifteens calc
-    for r in range(2, 6):
-        for comb in combinations(hand, r):
-            print(comb)
-            if sum(card[0] for card in comb) == 15:
-                print('15 for 2!')
-                points += 2
+    # ADD RUNS CALCULATOR FUNCTION THEN WE'RE GOLDEN
+    points += fifteen_calc(hand) + flush_calc(hand)
 
     print(f'Points: {points}')
 
