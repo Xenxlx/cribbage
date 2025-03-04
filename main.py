@@ -1,5 +1,7 @@
 '''
 This is my attempt at making a cribbage game!
+Note that this was started as a means to learn OOP.
+The goal is to make it functional before being stylistically correct.
 '''
 import hand_calc
 from random import randint
@@ -7,7 +9,7 @@ DISCARDS = 2
 
 class Deck:
     cards = [[rank, suit] for suit in hand_calc.SUIT_LST for rank in hand_calc.RANK_LST]
-    left = len(cards) # Hardcode to 52 or not?
+    left = len(cards)
 
     def __str__(self):
         cards = ""
@@ -44,6 +46,13 @@ class Game:
         cls.cut = Deck.deal()
 
     @classmethod
+    def print_peg_sequence(cls):
+        hand = ""
+        for i in range(len(cls.peg_sequence)):
+            hand += f"{i+1}: " + "".join(cls.peg_sequence[i]) + "  "
+        print(f"Pegging sequence: {hand}")
+
+    @classmethod
     def round_reset(cls):
         cls.peg_sequence = []
         cls.peg_count = 0
@@ -67,8 +76,8 @@ class Player:
         return self.points - other.points
     
     # Might not be useful?
-    def add_point(self):
-        self.points += 1
+    def add_points(self, points):
+        self.points += points
         self.points_string = " " + self.points_string
 
     def print_hand(self):
@@ -133,6 +142,7 @@ class Player:
                 card = self.ask_card()
                 Game.peg_count += card_conv(self.hand[card])
                 Game.peg_sequence.append(self.peg_hand.pop(card))
+            return True
 
 def print_main_menu():
     print("---------------------")
@@ -157,7 +167,7 @@ def test_peg_board(string):
     print(string)
 
 # Converts a card to its face value
-def card_conv(card):
+def card_convert(card):
     if card[0] == 'A':
         return 1
     elif card[0] in ['K', 'Q', 'J']:
@@ -174,22 +184,30 @@ def pegging(computer: Player, player: Player):
         # CHECK FOR PLAYER WITH A HAND OF 0 CARDS, FIX FUNCTION FOR THAT CASE
         if curr.peg_discard() == False:
             print(f"{other.name}| Point from the Go!")
+            other.add_points(1)
+        # Add logic to handle 
+
+        # Checks for pairs
+        if Game.peg_sequence[-1][0] == Game.peg_sequence[-2][0]:
+            print(f"{curr.name}| Pair for two!")
+            curr.add_points(2)
+            # Add pair status..? OR nested ifs
+
+        # Check for 4 of same number
+
+
 
         if Game.peg_count == 15:
             print(f"{curr.name}| Fifteen for 2!")
-            curr.points += 2
+            curr.add_points(2)
 
         elif Game.peg_count == 31:
             print(f"{curr.name}| Thirty-one for 2!")
-            curr.points += 2
+            curr.add_points(2)
             Game.round_reset()
 
-    # Swap discard turn
-    curr = other
-    if curr.name == "Computer":
-        other = player
-    else:
-        other = computer
+    # Swap pegging turn
+    curr, other = other, curr
 
         
 def game(computer, player):
@@ -208,7 +226,7 @@ game(computer, p1)
 
 '''
 # WORKS
-# Test unit for dealing cards + card count (deck class)
+# Test for dealing cards + card count (deck class)
 deck_example = Deck()
 print(f"{deck_example}")
 print("-----------------------------")
