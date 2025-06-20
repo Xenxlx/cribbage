@@ -133,6 +133,7 @@ class Player:
     # Double check if this works properly
     # Doesn't keep track of peg hand length
     # FIX SO THAT IT ENSURES YOU PICK A CARD THAT ADDS UP TO LESS THAN 31 IN PEG_SEQUENCE
+    # This needs to be fixed.
     def peg_discard(self) -> bool:
         if self.check_over_31() == False:
             return False
