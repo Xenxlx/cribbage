@@ -8,7 +8,7 @@ RANK_LST = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 SUIT_LST = ['H', 'D', 'S', 'C']
 
 # Card class (card1 = Card(rank, suit)), NOT USED CURRENTLY
-# I'll come back if I learn how to implement OOP in this program
+# Unsure if this is necessary. A hash table mapping the face value of the card to it's number value might be better
 '''class Card:
     def __init__(self, rank, suit):
         self.rank = get_hand()
@@ -88,6 +88,7 @@ def pair_calc(hand):
             if hand[j][0] == hand[i][0]:
                 points += 2
                 print(f"Pair of {hand[j][0]}'s!")
+    print(f"Pair points: {points}")
     return points
 
 def fifteen_calc(hand):
@@ -98,6 +99,7 @@ def fifteen_calc(hand):
             if sum(card[0] for card in comb) == 15:
                 print('15 for 2!')
                 points += 2
+    print(f"15 points: {points}")
     return points
 
 def flush_calc(hand):
@@ -117,6 +119,7 @@ def flush_calc(hand):
         print(f'Flush of {suit_length} cards!')
 
     print(f'Suit length: {suit_length}')
+    print(f"Flush points: {points}")
     return points
 
 def run_calc(hand):
@@ -178,24 +181,25 @@ def run_calc(hand):
             multiplier = 0
 
         i += 1
+    print(f"Run points: {points}")
     return points
 
 
-def calculator():
+def calculator(cut_rank, cut_suit, hand):
     points = 0
-    cut_rank, cut_suit = get_cut()
-    hand = get_hand()
-    hand.append([cut_rank, cut_suit])
 
-    # points = pair_calc(hand) + run_calc + flush_calc + fifteens_calc // AT THE END
-
-    # Cut calculator
-    if cut_rank == 'J':
-        points += 1
-    
+    # Check for nob
     for i in range(len(hand)):
         if hand[i][0] == 'J' and hand[i][1] == cut_suit:
             points += 1
+            break
+
+    # Check for nibs ONLY if he's dealer
+    if cut_rank == 'J':
+        points += 2
+        print("2 for his heels!")
+
+    hand.append([cut_rank, cut_suit])
 
     # HAND PREPROCESSING - Face cards in order (for runs)
     for i in range(len(hand)):
@@ -212,13 +216,14 @@ def calculator():
             hand[i][0] = 13
 
     points += run_calc(hand) + pair_calc(hand)
+    print(f"Points thus far: {points}")
 
     # HAND PREPROCESSING - Convert face cards to value of 10
     i = 0
     for i in range(len(hand)):
         if 10 < hand[i][0] < 14:
             hand[i][0] = 10
-            print(hand[i][0])
+            #print(hand[i][0])
 
         else:
             hand[i][0] = int(hand[i][0])
@@ -226,4 +231,7 @@ def calculator():
     points += flush_calc(hand) + fifteen_calc(hand)
     print(f'Points: {points}')
 
-#calculator()
+if __name__ == "__main__":
+    cut_rank, cut_suit = get_cut()
+    hand = get_hand()
+    calculator(cut_rank, cut_suit)
