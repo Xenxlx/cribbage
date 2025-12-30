@@ -5,9 +5,10 @@ The goal is to make it functional before being stylistically correct.
 '''
 from hand_calc import calculator, SUIT_LST, RANK_LST
 from random import randint
+
 DISCARDS = 2
 
-# I could've made a card class but hand_calc takes has card property constants
+# I could've made a card class but hand_calc has card constants already defined
 
 class Deck:
     cards = [[rank, suit] for suit in SUIT_LST for rank in RANK_LST]
@@ -23,19 +24,33 @@ class Deck:
     def deal(cls):
         cls.left -= 1
         return cls.cards.pop(randint(0, cls.left - 1))
-    
+
     @classmethod
     def reset(cls):
-        cards = [[rank, suit] for suit in hand_calc.SUIT_LST for rank in hand_calc.RANK_LST]
+        cards = [[rank, suit] for suit in SUIT_LST for rank in RANK_LST]
         left = len(cards)
+
 
 class Game:
     crib = []
     dealer = None
+
     crib_points = 0
+    peg_round = False
     peg_sequence = []
     peg_count = 0
     cut = None
+
+    @classmethod
+    def set_dealer(cls, dealer):
+        cls.dealer = dealer
+
+    @classmethod
+    def change_dealer(cls, p1, p2):
+        if cls.dealer == p1:
+            cls.dealer = p2
+        else:
+            cls.dealer = p1
 
     @classmethod
     def print_crib(cls):
@@ -58,13 +73,16 @@ class Game:
     def get_cut(cls):
         cls.cut = Deck.deal()
         print(f"CUT CARD| {cls.cut}")
+        hand += f"{i + 1}: " + "".join(cls.crib[i]) + "  "
+        print(hand)
+        # Deal with cut points
 
     @classmethod
     def print_peg_sequence(cls):
         hand = ""
         for i in range(len(cls.peg_sequence)):
-            hand += f"{i+1}: " + "".join(cls.peg_sequence[i]) + "  "
-        print(f"Pegging sequence: {hand}")
+            hand += f"{i + 1}: " + "".join(cls.peg_sequence[i]) + "  "
+        print(f"Pegging sequence: {hand} ({Game.peg_count})")
 
     @classmethod
     def peg_round_reset(cls):
@@ -87,6 +105,7 @@ class Player:
     def make_hand(self):
         for i in range(self.num_cards):
             self.hand.append(Deck.deal())
+        self.hand = sorted(self.hand, key=lambda card: card_convert(card))  # Sorts by rank
 
         # Sort hand by rank for visual ease
         self.hand = sorted(self.hand, key=lambda card: card[0])
@@ -100,10 +119,12 @@ class Player:
         self.left = len(self.hand)
         self.points = 0
         self.points_string = "|"
-    
+
     def __sub__(self, other):
         return self.points - other.points
-    
+
+    # Might not be useful?
+    #CHECK HERE FOR IF GAME WON!!!!!
     def add_points(self, points):
         self.points += points
         self.points_string = "." + self.points_string
@@ -111,9 +132,9 @@ class Player:
     def print_hand(self):
         hand = ""
         for i in range(len(self.hand)):
-            hand += f"{i+1}: " + "".join(self.hand[i]) + "  "
+            hand += f"{i + 1}: " + "".join(self.hand[i]) + "  "
         return hand
-    
+
     def __str__(self):
         return f"{self.name}| {self.print_hand()}"
 
@@ -126,7 +147,7 @@ class Player:
             card = input("Select a number corresponding to a card in your hand: ")
             if card.isdigit():
                 card = int(card)
-                if (1 <= card <= len(self.hand)) == True:
+                if 1 <= card <= len(self.hand):
                     self.left -= 1
                     return card - 1
                 else:
@@ -135,11 +156,12 @@ class Player:
                 print("Please enter an integer value.")
 
     def crib_discard(self, num):
-        print("\nDiscard 2 cards for the crib.")
+        print(f"\nDiscard 2 cards for the crib, {self.name}.")
         print("--------------------------------------------------------")
 
         # NEXT STEP: add crib discard strategy (function)
         if self.name == "Computer":
+            print(f"{self.name}'s hand|  {self.print_hand()}")
             for i in range(num):
                 Game.crib.append(self.hand.pop(randint(0, self.left - 1)))
                 self.left -= 1
@@ -148,7 +170,7 @@ class Player:
                 card = self.ask_card()
                 Game.crib.append(self.hand.pop(card))
 
-    # Checks if player can go
+    # Checks if player is able to play during pegging
     def check_over_31(self):
         for i in range(self.left):
             if card_convert(self.peg_hand[i]) + Game.peg_count <= 31:
@@ -161,13 +183,13 @@ class Player:
             return False
         else:
             if self.name == "Computer":
-                    for card_index in range(self.left):
-                        card_number = card_convert(self.hand[card_index])
-                        if Game.peg_count + card_number < 32:
-                            Game.peg_count += card_number
-                            Game.peg_sequence.append(self.peg_hand.pop(card_index))
-                            self.left -= 1
-                            break
+                for card_index in range(self.left):
+                    card_number = card_convert(self.hand[card_index])
+                    if Game.peg_count + card_number < 32:
+                        Game.peg_count += card_number
+                        Game.peg_sequence.append(self.peg_hand.pop(card_index))
+                        self.left -= 1
+                        break
             else:
                 # Can add computer peg discard strategy function
                 while True:
@@ -180,6 +202,7 @@ class Player:
                     print("You've gotta pick a card that doesn't break 31!")
             return True
 
+
 def print_main_menu():
     print("---------------------")
     print("       Cribbage      ")
@@ -187,20 +210,25 @@ def print_main_menu():
     print("   Hand: Rank-Suit")
     print("---------------------")
 
+
 def print_board(computer, player):
     print(f"Computers points: {computer.points}")
     print(f"Players points: {player.points}")
     print("Computer:")
-    print("_________________________________________________________________________________________________________________________END")
+    print(
+        "_________________________________________________________________________________________________________________________END")
     print(f"{computer.points_string}")
     print(f"Player:")
     print(f"{player.points_string}")
-    print("_________________________________________________________________________________________________________________________END")
+    print(
+        "_________________________________________________________________________________________________________________________END")
+
 
 def test_peg_board(string):
     for i in range(121):
         string = " " + string
     print(string)
+
 
 # Converts a card to its face value
 def card_convert(card):
@@ -211,19 +239,24 @@ def card_convert(card):
     else:
         return int(card[0])
 
+
 # Could be a Game method. Easy refactor
 def check_of_a_kind_pegging(peg_sequence) -> int:
     tally = 1
     if not len(peg_sequence):
         return 0
+
     for i in range(1, len(peg_sequence)):
-        if peg_sequence[i][0] == peg_sequence[i-1][0]:
+        if peg_sequence[i][0] == peg_sequence[i - 1][0]:
             tally += 1
         else:
             tally = 1
     return tally
 
 
+# TO ADD:
+# make sure points board is updated.
+# - maybe rename parameters to first and second player? (dealer/non-dealer)
 def pegging(computer: Player, player: Player):
     curr = player
     other = computer
@@ -232,12 +265,12 @@ def pegging(computer: Player, player: Player):
     print("                       PEGGING                       ")
     print("--------------------------------------------------------")
 
-    # Remember to reset peg_sequence after every pegging round (A: Done?)
     while computer.left != 0 or player.left != 0:
         # Add logic to handle
         Game.print_peg_sequence()
         print(f"Peg count: {Game.peg_count}")
 
+        # Check if other person can play again??
         if not curr.peg_discard():
             print(f"{other.name}| Point from the Go!")
             other.add_points(1)
@@ -267,13 +300,14 @@ def pegging(computer: Player, player: Player):
                 curr.add_points(2)
                 Game.peg_round_reset()
 
-            # Swap pegging turn
         curr, other = other, curr
+    print_board(computer, player)
 
-        
+
 def game(computer, player):
     Game.dealer = player
     print_main_menu()
+    Game.set_dealer(player)
 
     while computer.points < 122 and player.points < 122:
         player.crib_discard(DISCARDS)
